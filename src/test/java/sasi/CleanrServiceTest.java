@@ -64,10 +64,12 @@ public class CleanrServiceTest {
         // Run archival on the temp folder
         // Update configuration to point the temp file path
         Configuration config = new Configuration();
+        config.setScanPath(tempFilesDir);
         Cleanr cleanr = new Cleanr(config);
 
         List<File> files = cleanr.scanFilesForArchival();
 
+        Assert.assertTrue( files.size() == 1);
     }
 
     @Test public void testArchiveFilesOn1stSweep() {
