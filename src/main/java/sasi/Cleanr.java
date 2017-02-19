@@ -2,10 +2,17 @@ package sasi;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.FileVisitOption;
+import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileTime;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -14,20 +21,55 @@ import java.util.stream.Stream;
 public class Cleanr {
 
     Configuration config;
+    
+    private Path cleanPath;
+    private CleanFilter filter;
+    private Archivable archiver = new FileCleanr();
 
-    public Cleanr(Configuration config) {
-        this.config = config;
+    public Cleanr(Path path) {
+    	cleanPath = path;
+        Path archiveDirectoryPath = getArchivesDirectoryPath();
+        archiver.setArchivePath(archiveDirectoryPath);
     }
-
-    public List<File> scanFilesForArchival() {
+    
+    public Path getArchivesDirectoryPath() {
+    	return cleanPath.resolve("cleanr-arvhives");
+    }
+    
+    public List<Path> scanFilesForArchival() {
         try {
-            Stream<Path> allFiles = Files.list(config.getScanPath());
-            
-
+            Stream<Path> files = Files.find(cleanPath, 1, (path, attributes) -> {
+            	if(attributes.isRegularFile()){
+            		return filter.filterRegularFile(path);
+            	} else {
+            		return filter.filterDirectory(path);
+            	}
+            });
+            return files.collect(Collectors.toList());
         } catch (IOException e) {
             e.printStackTrace();
             return Collections.EMPTY_LIST;
         }
-        return null;
+    }
+    
+    public void clean(List<Path> paths, boolean expunge){
+    	paths.stream()
+    			.filter(path -> path.toFile().isFile())
+    			.forEach(path -> {
+    				if(expunge) {
+    					archiver.deleteFile(path);
+    				} else {
+    					archiver.arvhiveFile(path);
+    				}
+    			});
+    }
+    
+    public static void main(String args[]){
+    	Path start = new File("/Users/QGB368/Downloads").toPath();
+    	Cleanr cleanr = new Cleanr(start);
+    	List<Path> filesForArchival = cleanr.scanFilesForArchival();
+    	cleanr.clean(filesForArchival, false);
+    	
+    	cleanr.scanFilesForArchival()
     }
 }
