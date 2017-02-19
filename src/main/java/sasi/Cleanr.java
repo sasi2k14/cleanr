@@ -36,9 +36,9 @@ public class Cleanr {
     	return cleanPath.resolve("cleanr-arvhives");
     }
     
-    public List<Path> scanFilesForArchival() {
-        try {
-            Stream<Path> files = Files.find(cleanPath, 1, (path, attributes) -> {
+    private List<Path> scanFilesForArchival(Path scanPath) {
+    	try {
+            Stream<Path> files = Files.find(scanPath, 1, (path, attributes) -> {
             	if(attributes.isRegularFile()){
             		return filter.filterRegularFile(path);
             	} else {
@@ -50,6 +50,14 @@ public class Cleanr {
             e.printStackTrace();
             return Collections.EMPTY_LIST;
         }
+    }
+    
+    public List<Path> scanArchivesDirectoryPath() {
+    	return scanFilesForArchival(getArchivesDirectoryPath());
+    }
+    
+    public List<Path> scanFilesForArchival() {
+        return scanFilesForArchival(cleanPath);
     }
     
     public void clean(List<Path> paths, boolean expunge){
@@ -70,6 +78,7 @@ public class Cleanr {
     	List<Path> filesForArchival = cleanr.scanFilesForArchival();
     	cleanr.clean(filesForArchival, false);
     	
-    	cleanr.scanFilesForArchival()
+    	List<Path> filesForDeletion = cleanr.scanArchivesDirectoryPath();
+    	cleanr.clean(filesForDeletion, true);
     }
 }
