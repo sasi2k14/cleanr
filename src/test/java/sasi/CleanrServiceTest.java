@@ -4,11 +4,9 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
@@ -63,17 +61,24 @@ public class CleanrServiceTest {
 
         // Run archival on the temp folder
         // Update configuration to point the temp file path
-        Configuration config = new Configuration();
-        config.setScanPath(tempFilesDir);
-        Cleanr cleanr = new Cleanr(config);
+//        Configuration config = new Configuration();
+//        config.setScanPath(tempFilesDir);
+        Cleanr cleanr = new Cleanr(tempFilesDir);
 
-        List<File> files = cleanr.scanFilesForArchival();
+        List<Path> files = cleanr.scanFilesForArchival();
 
         Assert.assertTrue( files.size() == 1);
     }
 
-    @Test public void testArchiveFilesOn1stSweep() {
+    @Test public void testArchiveFilesOn1stSweep() throws IOException {
+        Path path = Paths.get("/Users/sasikumar/Downloads/groovy-2.4.7");
+        if ( Files.exists(path) ) {
 
+            System.out.println( Files.getAttribute(path, "lastAccessTime") );
+
+        } else {
+            throw new FileNotFoundException();
+        }
     }
 
     @Test public void testDeleteFilesOn2ndSweep() {

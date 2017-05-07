@@ -23,7 +23,7 @@ public class Cleanr {
     Configuration config;
     
     private Path cleanPath;
-    private CleanFilter filter;
+    private CleanFilter filter = new LastAccessTimeFilter();
     private Archivable archiver = new FileCleanr();
 
     public Cleanr(Path path) {
@@ -42,6 +42,7 @@ public class Cleanr {
             	if(attributes.isRegularFile()){
             		return filter.filterRegularFile(path);
             	} else {
+                    // Ignore Hidden + System dir
             		return filter.filterDirectory(path);
             	}
             });
