@@ -1,17 +1,16 @@
 package sasi;
 
-import java.io.File;
+import sasi.filters.CleanFilter;
+import sasi.filters.HiddenFilesFilter;
+import sasi.filters.LastAccessTimeFilter;
+
 import java.io.IOException;
-import java.nio.file.FileSystems;
-import java.nio.file.FileVisitOption;
-import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.attribute.FileTime;
-import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -20,56 +19,56 @@ import java.util.stream.Stream;
  */
 public class Cleanr {
 
+    private static final boolean DO_NOT_DELETE = false;
     Configuration config;
     
-    private Path cleanPath;
-    private CleanFilter filter;
-    private Archivable archiver = new FileCleanr();
+    private List<CleanFilter> filters;
 
-    public Cleanr(Path path) {
-    	cleanPath = path;
-        Path archiveDirectoryPath = getArchivesDirectoryPath();
-        archiver.setArchivePath(archiveDirectoryPath);
+    private FileCleanr fileCleanr;
+
+    public Cleanr(){
+        filters = new ArrayList<>();
+        filters.add(new LastAccessTimeFilter());
+        filters.add(new HiddenFilesFilter());
     }
-    
-    public Path getArchivesDirectoryPath() {
-    	return cleanPath.resolve("cleanr-arvhives");
+
+    public Cleanr(List<CleanFilter> _filters){
+        filters = _filters;
     }
-    
-    private List<Path> scanFilesForArchival(Path scanPath) {
+
+    public void addFilter(CleanFilter filter) {
+        filters.add(filter);
+    }
+
+    public List<Path> scanFiles(Path root) {
     	try {
-            Stream<Path> files = Files.find(scanPath, 1, (path, attributes) -> {
-            	if(attributes.isRegularFile()){
-            		return filter.filterRegularFile(path);
-            	} else {
-            		return filter.filterDirectory(path);
-            	}
-            });
-            return files.collect(Collectors.toList());
+            Stream<Path> filesForDeletion = Files.find(root, 1,
+                                            (path, attributes) -> isPathMarkedForDeletion(path));
+            return filesForDeletion.collect(Collectors.toList());
+
         } catch (IOException e) {
             e.printStackTrace();
             return Collections.EMPTY_LIST;
         }
     }
-    
-    public List<Path> scanArchivesDirectoryPath() {
-    	return scanFilesForArchival(getArchivesDirectoryPath());
+
+    protected boolean isPathMarkedForDeletion(Path path) {
+        boolean canBeDeleted = true;
+        for(CleanFilter filter : filters) {
+                boolean result = filter.isPathCanBeDeleted(path);
+                System.out.println(filter.getClass().getName() + " + " + path + "=" + result);
+                if(result == DO_NOT_DELETE) {
+                    return false;
+                }
+//                if(isFile(path)) {
+//                    canBeDeleted = canBeDeleted && filter.isPathCanBeDeleted(path);
+//                }
+        }
+        return canBeDeleted;
     }
-    
-    public List<Path> scanFilesForArchival() {
-        return scanFilesForArchival(cleanPath);
+
+    protected boolean isFile(Path path) {
+        return Files.isRegularFile(path);
     }
-    
-    public void clean(List<Path> paths, boolean expunge){
-    	paths.stream()
-    			.filter(path -> path.toFile().isFile())
-    			.forEach(path -> {
-    				if(expunge) {
-    					archiver.deleteFile(path);
-    				} else {
-    					archiver.arvhiveFile(path);
-    				}
-    			});
-    }
-    
+
 }

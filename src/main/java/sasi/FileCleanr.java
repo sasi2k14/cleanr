@@ -1,37 +1,23 @@
 package sasi;
 
+import java.io.IOException;
+import java.nio.file.CopyOption;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 
-public class FileCleanr implements Archivable {	
+/**
+ * Deletes or Archives files
+ */
+public class FileCleanr {
 
-	private Path archivePath;
-
-	@Override
-	public boolean arvhiveFile(Path path) {
-		return false;
+	public static void moveFile(Path src, Path dest) throws IOException {
+        dest = dest.resolve(src.getFileName());
+        Files.move(src, dest, StandardCopyOption.ATOMIC_MOVE);
 	}
 
-	@Override
-	public boolean arhiveFolder(Path path) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public void setArchivePath(Path path) {
-		archivePath = path;
-	}
-
-	@Override
-	public boolean deleteFile(Path path) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public boolean deleteFolder(Path path) {
-		// TODO Auto-generated method stub
-		return false;
+	public static boolean deleteFile(Path path) throws IOException {
+		return Files.deleteIfExists(path);
 	}
 
 }

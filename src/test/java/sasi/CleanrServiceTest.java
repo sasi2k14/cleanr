@@ -2,81 +2,98 @@ package sasi;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.runners.MockitoJUnitRunner;
+import sasi.filters.CleanFilter;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.*;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
+import static org.mockito.Mockito.*;
+
 /**
  * Created by qgb368 on 8/12/2016.
  */
+@RunWith(MockitoJUnitRunner.class)
 public class CleanrServiceTest {
 
-    /**
-     * Creates a set of temp files under a temp directory
-     * @param numberOffiles
-     * @return Path of temp Directory
-     * @throws IOException
-     */
-    private Path createTempFiles(int numberOffiles) throws IOException {
-        Path tempDir = Files.createTempDirectory("cleanr-app-test");
+    @Mock
+    private Path path;
 
-        for(int i=0 ; i<numberOffiles; i++){
-            Path tempFile = Files.createTempFile(tempDir, "cleanrservicetest", "");
-            System.out.printf("Created temp file:%s\n", tempFile);
-        }
+    private List<CleanFilter> filters;
 
-        return tempDir;
-    }
+    @Test public void failEvenOneFilterReturnsFalse() throws IOException {
+        List<CleanFilter> cleanFilters = new ArrayList<>();
 
-    private void updateFilesLastAccessed30DaysBack(List<Path> files) throws IOException {
-        for(Path file : files) {
-            int daysOld = ThreadLocalRandom.current().nextInt(31, 9999);
-            FileTime lastAccessedTime = FileTime.from(Instant.now().plus(daysOld, ChronoUnit.DAYS));
-            Files.setAttribute(file, "lastAccessTime", lastAccessedTime);
+        CleanFilter trueFilter = mock(CleanFilter.class);
+        CleanFilter falseFilter = Mockito.mock(CleanFilter.class);
 
-            System.out.println( Files.getAttribute(file, "lastAccessTime"));
-        }
-    }
+        when(trueFilter.isPathCanBeDeleted(any())).thenReturn(true);
+        when(falseFilter.isPathCanBeDeleted(any())).thenReturn(false);
 
-    @Test public void testCleanrFindilesOlderThan30daysForArchival() throws IOException {
-        // Create a temp file on a temp folder
-        Path tempFilesDir = createTempFiles(1);
-        Assert.assertTrue( Files.list(tempFilesDir).count() == 1);
+        cleanFilters.add(trueFilter);
+        cleanFilters.add(falseFilter);
+        cleanFilters.add(trueFilter);
 
-        // Update the modified timestamp to be more than 30days
-        List allFiles = Files.list(tempFilesDir).collect(Collectors.toList());
-        updateFilesLastAccessed30DaysBack(allFiles);
+        Cleanr cleanr = new Cleanr(cleanFilters);
+        cleanr = spy(cleanr);
+        doReturn(true).when(cleanr).isFile(any());
 
-        // Run archival on the temp folder
-        // Update configuration to point the temp file path
-        Configuration config = new Configuration();
-        config.setScanPath(tempFilesDir);
-        Cleanr cleanr = new Cleanr(config);
-
-        List<File> files = cleanr.scanFilesForArchival();
-
-        Assert.assertTrue( files.size() == 1);
-    }
-
-    @Test public void testArchiveFilesOn1stSweep() {
+        boolean result = cleanr.isPathMarkedForDeletion(Paths.get(""));
+        Assert.assertFalse(result);
 
     }
 
-    @Test public void testDeleteFilesOn2ndSweep() {
+    @Test public void passWhenAllFilterReturnsTrue() throws IOException {
+        List<CleanFilter> cleanFilters = new ArrayList<>();
 
+        CleanFilter trueFilter = mock(CleanFilter.class);
+        CleanFilter falseFilter = Mockito.mock(CleanFilter.class);
+
+        when(trueFilter.isPathCanBeDeleted(any())).thenReturn(true);
+        when(falseFilter.isPathCanBeDeleted(any())).thenReturn(false);
+
+        cleanFilters.add(trueFilter);
+        cleanFilters.add(trueFilter);
+        cleanFilters.add(trueFilter);
+
+        Cleanr cleanr = new Cleanr(cleanFilters);
+        cleanr = spy(cleanr);
+        doReturn(true).when(cleanr).isFile(any());
+
+        System.out.println("Total filters:" + cleanFilters.size());
+        boolean result = cleanr.isPathMarkedForDeletion(null);
+        Assert.assertTrue(result);
     }
+
+    @Test public void failWhenAllFilterReturnsFalse() throws IOException {
+        List<CleanFilter> cleanFilters = new ArrayList<>();
+
+        CleanFilter trueFilter = mock(CleanFilter.class);
+        CleanFilter falseFilter = Mockito.mock(CleanFilter.class);
+
+        when(falseFilter.isPathCanBeDeleted(any())).thenReturn(false);
+
+        cleanFilters.add(falseFilter);
+        cleanFilters.add(falseFilter);
+        cleanFilters.add(falseFilter);
+
+        Cleanr cleanr = new Cleanr(cleanFilters);
+        cleanr = spy(cleanr);
+        doReturn(true).when(cleanr).isFile(any());
+
+        System.out.println("Total filters:" + cleanFilters.size());
+        boolean result = cleanr.isPathMarkedForDeletion(null);
+        Assert.assertFalse(result);
+    }
+
 }
