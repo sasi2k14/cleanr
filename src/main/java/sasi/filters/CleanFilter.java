@@ -4,5 +4,5 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 public interface CleanFilter {
-	public boolean isPathCanBeDeleted(Path path);
+	public boolean isPathCanBeCleaned(Path path);
 }

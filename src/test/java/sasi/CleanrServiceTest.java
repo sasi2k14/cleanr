@@ -10,13 +10,8 @@ import sasi.filters.CleanFilter;
 
 import java.io.IOException;
 import java.nio.file.*;
-import java.nio.file.attribute.FileTime;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.stream.Collectors;
 
 import static org.mockito.Mockito.*;
 
@@ -37,8 +32,8 @@ public class CleanrServiceTest {
         CleanFilter trueFilter = mock(CleanFilter.class);
         CleanFilter falseFilter = Mockito.mock(CleanFilter.class);
 
-        when(trueFilter.isPathCanBeDeleted(any())).thenReturn(true);
-        when(falseFilter.isPathCanBeDeleted(any())).thenReturn(false);
+        when(trueFilter.isPathCanBeCleaned(any())).thenReturn(true);
+        when(falseFilter.isPathCanBeCleaned(any())).thenReturn(false);
 
         cleanFilters.add(trueFilter);
         cleanFilters.add(falseFilter);
@@ -46,7 +41,6 @@ public class CleanrServiceTest {
 
         Cleanr cleanr = new Cleanr(cleanFilters);
         cleanr = spy(cleanr);
-        doReturn(true).when(cleanr).isFile(any());
 
         boolean result = cleanr.isPathMarkedForDeletion(Paths.get(""));
         Assert.assertFalse(result);
@@ -59,8 +53,8 @@ public class CleanrServiceTest {
         CleanFilter trueFilter = mock(CleanFilter.class);
         CleanFilter falseFilter = Mockito.mock(CleanFilter.class);
 
-        when(trueFilter.isPathCanBeDeleted(any())).thenReturn(true);
-        when(falseFilter.isPathCanBeDeleted(any())).thenReturn(false);
+        when(trueFilter.isPathCanBeCleaned(any())).thenReturn(true);
+        when(falseFilter.isPathCanBeCleaned(any())).thenReturn(false);
 
         cleanFilters.add(trueFilter);
         cleanFilters.add(trueFilter);
@@ -68,7 +62,6 @@ public class CleanrServiceTest {
 
         Cleanr cleanr = new Cleanr(cleanFilters);
         cleanr = spy(cleanr);
-        doReturn(true).when(cleanr).isFile(any());
 
         System.out.println("Total filters:" + cleanFilters.size());
         boolean result = cleanr.isPathMarkedForDeletion(null);
@@ -81,7 +74,7 @@ public class CleanrServiceTest {
         CleanFilter trueFilter = mock(CleanFilter.class);
         CleanFilter falseFilter = Mockito.mock(CleanFilter.class);
 
-        when(falseFilter.isPathCanBeDeleted(any())).thenReturn(false);
+        when(falseFilter.isPathCanBeCleaned(any())).thenReturn(false);
 
         cleanFilters.add(falseFilter);
         cleanFilters.add(falseFilter);
@@ -89,7 +82,6 @@ public class CleanrServiceTest {
 
         Cleanr cleanr = new Cleanr(cleanFilters);
         cleanr = spy(cleanr);
-        doReturn(true).when(cleanr).isFile(any());
 
         System.out.println("Total filters:" + cleanFilters.size());
         boolean result = cleanr.isPathMarkedForDeletion(null);

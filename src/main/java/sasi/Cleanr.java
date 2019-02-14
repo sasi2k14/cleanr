@@ -1,8 +1,9 @@
 package sasi;
 
+import sasi.filters.DefaultExcludedPathsFilter;
 import sasi.filters.CleanFilter;
 import sasi.filters.HiddenFilesFilter;
-import sasi.filters.LastAccessTimeFilter;
+import sasi.filters.LastAccessTimeBasedFilter;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -10,7 +11,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -20,16 +20,25 @@ import java.util.stream.Stream;
 public class Cleanr {
 
     private static final boolean DO_NOT_DELETE = false;
-    Configuration config;
-    
+    public static final int DIRECTORY_DEPTH = 1;
+
     private List<CleanFilter> filters;
+    private Path pathToCleanUp;
 
     private FileCleanr fileCleanr;
 
-    public Cleanr(){
+    public Cleanr(Path path){
+
+        pathToCleanUp = path;
         filters = new ArrayList<>();
-        filters.add(new LastAccessTimeFilter());
+        filters.add(new LastAccessTimeBasedFilter());
         filters.add(new HiddenFilesFilter());
+
+        List<Path> excludedPaths = new ArrayList<>();
+        excludedPaths.add(Utils.getArchiveDirectoryPath(pathToCleanUp));
+        excludedPaths.add(pathToCleanUp);
+        addFilter(new DefaultExcludedPathsFilter(excludedPaths));
+
     }
 
     public Cleanr(List<CleanFilter> _filters){
@@ -40,9 +49,17 @@ public class Cleanr {
         filters.add(filter);
     }
 
-    public List<Path> scanFiles(Path root) {
+    public List<Path> getFilesForCleanUp() {
+        if(pathToCleanUp.toFile().exists() == false) {
+            System.out.println(pathToCleanUp + "Path is empty");
+            return Collections.EMPTY_LIST;
+        }
+
     	try {
-            Stream<Path> filesForDeletion = Files.find(root, 1,
+            Stream<Path> filesForDeletion =
+                                    Files.find(
+                                            pathToCleanUp,
+                                            DIRECTORY_DEPTH,
                                             (path, attributes) -> isPathMarkedForDeletion(path));
             return filesForDeletion.collect(Collectors.toList());
 
@@ -53,22 +70,15 @@ public class Cleanr {
     }
 
     protected boolean isPathMarkedForDeletion(Path path) {
-        boolean canBeDeleted = true;
         for(CleanFilter filter : filters) {
-                boolean result = filter.isPathCanBeDeleted(path);
-                System.out.println(filter.getClass().getName() + " + " + path + "=" + result);
-                if(result == DO_NOT_DELETE) {
-                    return false;
-                }
-//                if(isFile(path)) {
-//                    canBeDeleted = canBeDeleted && filter.isPathCanBeDeleted(path);
-//                }
+            boolean result = filter.isPathCanBeCleaned(path);
+            if(result == DO_NOT_DELETE) {
+                System.out.println(path + " is marked NOT to be deleted by " + filter.getClass().getName());
+                return false;
+            }
         }
-        return canBeDeleted;
-    }
-
-    protected boolean isFile(Path path) {
-        return Files.isRegularFile(path);
+        System.out.println(path + " can be deleted");
+        return true;
     }
 
 }

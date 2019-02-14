@@ -10,7 +10,7 @@ import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
-import sasi.filters.LastAccessTimeFilter;
+import sasi.filters.LastAccessTimeBasedFilter;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,8 +31,8 @@ import static org.powermock.api.mockito.PowerMockito.when;
  * Created by qgb368 on 3/20/17.
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest(LastAccessTimeFilter.class)
-public class LastAccessTimeFilterTest {
+@PrepareForTest(LastAccessTimeBasedFilter.class)
+public class LastAccessTimeBasedFilterTest {
 
     @Mock BasicFileAttributeView basicFileAttributeView;
 
@@ -55,7 +55,7 @@ public class LastAccessTimeFilterTest {
         Mockito.when(basicFileAttributes.lastAccessTime()).thenReturn(FileTime.from(date30daysBack));
 
         //When
-        Assert.assertTrue( new LastAccessTimeFilter().isPathCanBeDeleted(null) );
+        Assert.assertTrue( new LastAccessTimeBasedFilter().isPathCanBeCleaned(null) );
     }
 
     @Test public void checkIfFileEqualTo30DaysCannotBeDeleted() throws Exception {
@@ -64,7 +64,7 @@ public class LastAccessTimeFilterTest {
         Mockito.when(basicFileAttributes.lastAccessTime()).thenReturn(FileTime.from(date30daysBack));
 
         //When
-        Assert.assertFalse( new LastAccessTimeFilter().isPathCanBeDeleted(null) );
+        Assert.assertFalse( new LastAccessTimeBasedFilter().isPathCanBeCleaned(null) );
     }
 
     @Test public void checkIfFileOlderWithin30DaysCannotBeDeleted() throws Exception {
@@ -73,7 +73,7 @@ public class LastAccessTimeFilterTest {
         Mockito.when(basicFileAttributes.lastAccessTime()).thenReturn(FileTime.from(date30daysBack));
 
         //When
-        Assert.assertFalse( new LastAccessTimeFilter().isPathCanBeDeleted(null) );
+        Assert.assertFalse( new LastAccessTimeBasedFilter().isPathCanBeCleaned(null) );
     }
 
     @Ignore @Test public void checkAllFilesAreAccesedInsideFolder() throws URISyntaxException, IOException {
@@ -91,6 +91,6 @@ public class LastAccessTimeFilterTest {
 
         System.out.println("After change:" + targetAttribute.lastAccessTime());
 
-//        new LastAccessTimeFilter().isDirectoryCanBeDeleted(Paths.get(new URI("file:///Users/qgb368/Downloads/src")));
+//        new LastAccessTimeBasedFilter().isDirectoryCanBeDeleted(Paths.get(new URI("file:///Users/qgb368/Downloads/src")));
     }
 }

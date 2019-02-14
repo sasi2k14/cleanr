@@ -15,10 +15,10 @@ import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.Iterator;
 
-public class LastAccessTimeFilter implements CleanFilter {
+public class LastAccessTimeBasedFilter implements CleanFilter {
 
 	@Override
-	public boolean isPathCanBeDeleted(Path path) {
+	public boolean isPathCanBeCleaned(Path path) {
 		if(Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS) ){
 			return isLastAccessTimeBefore(30, path);
 		} else {

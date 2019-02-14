@@ -8,7 +8,7 @@ import java.nio.file.Path;
 public class HiddenFilesFilter implements CleanFilter {
 
     @Override
-    public boolean isPathCanBeDeleted(Path path) {
+    public boolean isPathCanBeCleaned(Path path) {
         if(path.toFile().isHidden()) {
             return false;
         }
