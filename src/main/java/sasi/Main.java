@@ -55,7 +55,9 @@ public class Main {
 		}
 
 		Cleanr cleanr = new Cleanr(start);
+		cleanr.addFilter(new LastAccessTimeBasedFilter(maxDays));
 		List<Path> filesForArchival = cleanr.getFilesForCleanUp();
+
 		System.out.println("Total files for archival: " + filesForArchival.size());
 
 		for (Path path : filesForArchival) {
