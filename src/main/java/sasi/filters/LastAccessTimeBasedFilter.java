@@ -17,10 +17,18 @@ import java.util.Iterator;
 
 public class LastAccessTimeBasedFilter implements CleanFilter {
 
+	private int maxExpiryDays = 30;
+
+	public LastAccessTimeBasedFilter() {}
+
+	public LastAccessTimeBasedFilter(int _maxExpiryDays) {
+		maxExpiryDays = _maxExpiryDays;
+	}
+
 	@Override
 	public boolean isPathCanBeCleaned(Path path) {
 		if(Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS) ){
-			return isLastAccessTimeBefore(30, path);
+			return isLastAccessTimeBefore(maxExpiryDays, path);
 		} else {
 			return isDirectoryCanBeDeleted(path);
 		}
@@ -35,7 +43,7 @@ public class LastAccessTimeBasedFilter implements CleanFilter {
 				if(Files.isDirectory(filePath) && isDirectoryCanBeDeleted(filePath)) {
 					return true;
 				}
-				else if( isLastAccessTimeBefore(30, filePath) ) {
+				else if( isLastAccessTimeBefore(maxExpiryDays, filePath) ) {
 					return true;
 				}
 			}

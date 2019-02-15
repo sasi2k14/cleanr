@@ -22,7 +22,7 @@ public class Cleanr {
     private static final boolean DO_NOT_DELETE = false;
     public static final int DIRECTORY_DEPTH = 1;
 
-    private List<CleanFilter> filters;
+    private List<CleanFilter> filters = new ArrayList<>();
     private Path pathToCleanUp;
 
     private FileCleanr fileCleanr;
@@ -30,15 +30,13 @@ public class Cleanr {
     public Cleanr(Path path){
 
         pathToCleanUp = path;
-        filters = new ArrayList<>();
-        filters.add(new LastAccessTimeBasedFilter());
-        filters.add(new HiddenFilesFilter());
 
         List<Path> excludedPaths = new ArrayList<>();
         excludedPaths.add(Utils.getArchiveDirectoryPath(pathToCleanUp));
         excludedPaths.add(pathToCleanUp);
-        addFilter(new DefaultExcludedPathsFilter(excludedPaths));
 
+        addFilter(new DefaultExcludedPathsFilter(excludedPaths));
+        addFilter(new HiddenFilesFilter());
     }
 
     public Cleanr(List<CleanFilter> _filters){
